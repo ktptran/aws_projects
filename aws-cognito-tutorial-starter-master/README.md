@@ -1,3 +1,5 @@
+# This project was done through Cloud Path's Youtube Tutorial on Cognito and Amplify.
+
 ## Hexal Energy app
 
 This is a starter ReactJS UI for my 'Create a Serverless App' tutorial series.
