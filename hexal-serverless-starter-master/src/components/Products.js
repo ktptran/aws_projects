@@ -19,7 +19,6 @@ export default class Products extends Component {
     } catch (err) {
       console.log(`An error has occurred: ${err}`);
     }
-
   }
 
   componentDidMount = () => {
