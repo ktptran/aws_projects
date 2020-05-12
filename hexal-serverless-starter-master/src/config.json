@@ -1,5 +1,5 @@
 {
-  "api": { 
-    "invokeUrl": ""
-  } 
+  "api": {
+    "invokeUrl": "https://rws9j24g65.execute-api.us-west-2.amazonaws.com/prod"
+  }
 }
