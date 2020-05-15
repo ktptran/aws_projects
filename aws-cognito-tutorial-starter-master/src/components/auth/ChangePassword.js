@@ -65,7 +65,6 @@ class ChangePassword extends Component {
         <div className="container">
           <h1>Change Password</h1>
           <FormErrors formerrors={this.state.errors} />
-
           <form onSubmit={this.handleSubmit}>
             <div className="field">
               <p className="control has-icons-left">
