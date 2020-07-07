@@ -14,14 +14,20 @@ from bucket import BucketManager
 import boto3
 import click
 
-session = boto3.Session(profile_name='KevinPortfolioAdmin')
-bucket_manager = BucketManager(session)
-
+session = None
+bucket_manager = None
 
 @click.group()
+@click.option('--profile', default=none,
+    help="Use a given AWS profile.")
 def cli():
     """Webotron deploys websites to AWS."""
-    pass
+    global session, bucket_manager
+    session_cfg = {}
+    if profile:
+        session_cfg['profile_name'] = profile
+    session = boto3.Session(**session_cfg)
+    bucket_manager = BucketManager(session)
 
 
 @cli.command('list-buckets')
@@ -56,6 +62,7 @@ def sync(pathname, bucket):
     """Sync contents of PATHNAME to BUCKET."""
 
     bucket_manager.sync(pathname, bucket)
+    print(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucket)))
 
 
 if __name__ == '__main__':
