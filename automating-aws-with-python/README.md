@@ -10,3 +10,6 @@ Webotron currently has the following features:
 - List bucket
 - List contents of a bucket
 - Create and setup a bucket
+- Sync directory tree to bucket
+- Set AWS profile for webotron
+- Configure route 53 domain

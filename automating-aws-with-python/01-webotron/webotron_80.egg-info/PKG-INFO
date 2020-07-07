@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: webotron-80
+Version: 0.1
+Summary: Webotron 80 is a tool to deploy static websites to AWS.
+Home-page: https://github.com/ktptran/aws_projects/tree/master/automating-aws-with-python/01-webotron
+Author: Kevin Tran
+Author-email: kevint24@uw.edu
+License: GPLv3+
+Description: UNKNOWN
+Platform: UNKNOWN
