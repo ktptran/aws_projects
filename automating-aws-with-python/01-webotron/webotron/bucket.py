@@ -1,7 +1,7 @@
-# !/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """Classes for S3 Buckets."""
+
 from pathlib import Path
 import mimetypes
 from functools import reduce
@@ -9,11 +9,13 @@ from functools import reduce
 import boto3
 from botocore.exceptions import ClientError
 
-from hashlib import MD5
-import util
+from hashlib import md5
+from webotron import util
+
 
 class BucketManager:
     """Manage an S3 Bucket."""
+
     CHUNK_SIZE = 8388608
 
     def __init__(self, session):
@@ -28,17 +30,21 @@ class BucketManager:
 
     def get_bucket(self, bucket_name):
         """Get a bucket by name."""
-        return self.s3.Bucket(Bucket=bucket_name)
+        return self.s3.Bucket(bucket_name)
 
     def get_region_name(self, bucket):
         """Get the bucket's region name."""
-        bucket_location = self.s3.meta.client.get_bucket_location(Bucket=bucket.name)
+        client = self.s3.meta.client
+        bucket_location = client.get_bucket_location(Bucket=bucket.name)
+
         return bucket_location["LocationConstraint"] or 'us-east-1'
 
     def get_bucket_url(self, bucket):
-        """Get the website URL of the bucket."""
-        return "http://{}.{}".format(bucket.name,
-            util.get_endpoint(self.get_region_name(bucket)).host)
+        """Get the website URL for this bucket."""
+        return "http://{}.{}".format(
+            bucket.name,
+            util.get_endpoint(self.get_region_name(bucket)).host
+            )
 
     def all_buckets(self):
         """Get an iterator for all buckets."""
@@ -63,21 +69,23 @@ class BucketManager:
                 s3_bucket = self.s3.Bucket(bucket_name)
             else:
                 raise error
+
         return s3_bucket
 
     def set_policy(self, bucket):
         """Set bucket policy to be readable by everyone."""
         policy = """
         {
-            "Version": "2012-10-17",
-            "Statement": [{
-            "Sid":"PublicReadGetObject",
-            "Effect":"Allow",
-            "Principal": "*",
-                "Action":["s3:GetObject"],
-                "Resource":["arn:aws:s3:::%s/*"]
+          "Version":"2012-10-17",
+          "Statement":[{
+          "Sid":"PublicReadGetObject",
+          "Effect":"Allow",
+          "Principal": "*",
+              "Action":["s3:GetObject"],
+              "Resource":["arn:aws:s3:::%s/*"
+              ]
             }
-            ]
+          ]
         }
         """ % bucket.name
         policy = policy.strip()
@@ -86,8 +94,8 @@ class BucketManager:
         pol.put(Policy=policy)
 
     def configure_website(self, bucket):
-        """Configure bucket to host a website."""
-        s3.bucket.Website().put(WebsiteConfiguration={
+        """Configure s3 website hosting for bucket."""
+        bucket.Website().put(WebsiteConfiguration={
             'ErrorDocument': {
                 'Key': 'error.html'
             },
@@ -104,7 +112,7 @@ class BucketManager:
                 self.manifest[obj['Key']] = obj['ETag']
 
     @staticmethod
-    def has_data(data):
+    def hash_data(data):
         """Generate md5 hash for data."""
         hash = md5()
         hash.update(data)
@@ -115,23 +123,25 @@ class BucketManager:
         """Generate etag for file."""
         hashes = []
 
-
         with open(path, 'rb') as f:
             while True:
                 data = f.read(self.CHUNK_SIZE)
+
                 if not data:
                     break
+
                 hashes.append(self.hash_data(data))
+
         if not hashes:
             return
         elif len(hashes) == 1:
             return '"{}"'.format(hashes[0].hexdigest())
         else:
-            hash = self.hash_data(reduce(lambda x, y: x + y, (h.digest() for h in hashes)))
+            digests = (h.digest() for h in hashes)
+            hash = self.hash_data(reduce(lambda x, y: x + y, digests))
             return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
 
-    @staticmethod
-    def upload_file(bucket, path, key):
+    def upload_file(self, bucket, path, key):
         """Upload path to s3_bucket at key."""
         content_type = mimetypes.guess_type(key)[0] or 'text/plain'
 
@@ -144,22 +154,22 @@ class BucketManager:
             key,
             ExtraArgs={
                 'ContentType': content_type
-            }
+            },
             Config=self.transfer_config
         )
 
     def sync(self, pathname, bucket_name):
-        """Syncs the path of the bucket."""
+        """Sync contents of path to bucket."""
         bucket = self.s3.Bucket(bucket_name)
         self.load_manifest(bucket)
 
         root = Path(pathname).expanduser().resolve()
 
         def handle_directory(target):
-            for path in target.iterdir():
-                if path.is_dir():
-                    handle_directory(path)
-                if path.is_file():
-                    self.upload_file(bucket, str(path), str(path.relative_to(root)))
+            for p in target.iterdir():
+                if p.is_dir():
+                    handle_directory(p)
+                if p.is_file():
+                    self.upload_file(bucket, str(p), str(p.relative_to(root)))
 
         handle_directory(root)

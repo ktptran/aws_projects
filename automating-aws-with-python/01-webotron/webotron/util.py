@@ -26,6 +26,7 @@ region_to_endpoint = {
     'sa-east-1': Endpoint('South America (São Paulo)', 's3-website-sa-east-1.amazonaws.com', 'Z7KQH4QJS55SO'),
 }
 
+
 def known_region(region):
     """Return true if this is a known region."""
     return region in region_to_endpoint

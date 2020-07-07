@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
-"""Classes for CloudFront Distributions."""
+"""Classes for Cloud Front Distributions."""
 
 import uuid
 
+
 class DistributionManager:
+    """Manage CloudFront distributions."""
+
     def __init__(self, session):
+        """Create a DistributionManager."""
         self.session = session
         self.client = self.session.client('cloudfront')
 
@@ -13,18 +17,21 @@ class DistributionManager:
         """Find a dist matching domain_name."""
         paginator = self.client.get_paginator('list_distributions')
         for page in paginator.paginate():
-            for dist in page['DistributionList']['Items']:
+            print(page)
+            for dist in page['DistributionList'].get('Items', []):
                 for alias in dist['Aliases']['Items']:
                     if alias == domain_name:
                         return dist
+
         return None
 
     def create_dist(self, domain_name, cert):
         """Create a dist for domain_name using cert."""
         origin_id = 'S3-' + domain_name
+
         result = self.client.create_distribution(
             DistributionConfig={
-                'CallerReference': str(uuid.uuidv4()),
+                'CallerReference': str(uuid.uuid4()),
                 'Aliases': {
                     'Quantity': 1,
                     'Items': [domain_name]
@@ -51,21 +58,22 @@ class DistributionManager:
                         'Enabled': False
                     },
                     'ForwardedValues': {
-                        'Cookies': { 'Forward': 'all' },
-                        'Headers': { 'Quantity': 0},
+                        'Cookies': {'Forward': 'all'},
+                        'Headers': {'Quantity': 0},
                         'QueryString': False,
-                        'QueryStringCacheKeys': { 'Quantity' 0 }
+                        'QueryStringCacheKeys': {'Quantity': 0}
                     },
                     'DefaultTTL': 86400,
                     'MinTTL': 3600
                 },
                 'ViewerCertificate': {
                     'ACMCertificateArn': cert['CertificateArn'],
-                    'SSLSupportMethod: 'sni-only',
+                    'SSLSupportMethod': 'sni-only',
                     'MinimumProtocolVersion': 'TLSv1.1_2016'
                 }
             }
         )
+
         return result['Distribution']
 
     def await_deploy(self, dist):
