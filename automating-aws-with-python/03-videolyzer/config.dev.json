@@ -1,0 +1,7 @@
+{
+  "videolyzer": {
+    "profile": "pythonAutomation",
+    "videos_bucket": "ktptranvideolyzervideos365",
+    "videos_table": ""
+  }
+}
