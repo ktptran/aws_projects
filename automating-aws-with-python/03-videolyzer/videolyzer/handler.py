@@ -22,5 +22,14 @@ def start_processing_video(event, context):
             urllib.parse.unquote_plus(record[0]['s3']['object']['key'])
         )
 
+    print(response)
+    # while not done:
+    #   time.sleep(10)
+    #   done = check_job_status()
 
+    return
+
+
+def handle_label_detection(event, context):
+    print(event)
     return
