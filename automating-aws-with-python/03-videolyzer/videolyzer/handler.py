@@ -1,3 +1,5 @@
+import json
+import os
 import urllib
 
 import boto3
@@ -10,10 +12,22 @@ def start_label_detection(bucket, key):
                 'Bucket': bucket,
                 'Name': key
             }
+        },
+        NotificationChannel={
+            'SNSTopicArn': os.environ['REKOGNITION_SNS_TOPIC_ARN'],
+            'RoleArn': os.environ['REKOGNITION_ROLE_ARN']
         })
     print(response)
     return
 
+def get_video_labels(job_id):
+    pass
+
+def put_labels_in_db(data, video_name, video_bucket):
+    pass
+
+
+# Lambda events
 
 def start_processing_video(event, context):
     for record in event['Records']:
@@ -31,5 +45,12 @@ def start_processing_video(event, context):
 
 
 def handle_label_detection(event, context):
-    print(event)
+    for record in event['Records']:
+        message = json.loads(record['Sns']['Message'])
+        job_id = message['JobId']
+        s3_object = message['Video']['S3ObjectName']
+        s3_bucket = message['Video']['S3Bucket']
+
+        response = get_video_labels(job_id)
+        put_labels_in_db(response, s3_object, s3_bucket)
     return
